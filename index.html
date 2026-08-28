@@ -36,47 +36,83 @@
 </head>
 <body>
 
-    <h1>Привет из Mini App!</h1>
+    <h1>Профиль пользователя Telegram</h1>
     
-    <!-- Сюда мы выведем имя пользователя -->
-    <div class="user-card">
-        <p>Добро пожаловать, <span id="username">Гость</span>!</p>
+    <!-- Контейнер для красивого вывода всех полей -->
+    <div class="user-card" id="userDataContainer">
+        <p>Загрузка данных профиля...</p>
     </div>
 
-    <!-- Кнопка для отправки данных обратно в бота -->
-    <button id="sendBtn">Отправить заказ боту</button>
+    <button id="sendBtn">Отправить данные боту</button>
 
     <script>
-        // Инициализируем объект WebApp
-        const tg = window.Telegram.WebApp;
+        // ... (код загрузки скрипта, который мы писали ранее, остается без изменений) ...
 
-        // Сообщаем Telegram, что приложение полностью загрузилось и готово к отображению
-        tg.ready();
+        function initMiniApp() {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
 
-        // 3. ПОЛУЧАЕМ ДАННЫЕ О ПОЛЬЗОВАТЕЛЕ
-        // Проверяем, запущены ли мы внутри Telegram и есть ли данные пользователя
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            // Выводим имя (first_name) на экран
-            document.getElementById(username).innerText = user.first_name;
+            const container = document.getElementById('userDataContainer');
+
+            // 1. ПРОВЕРЯЕМ НАЛИЧИЕ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                
+                // Очищаем текст загрузки
+                container.innerHTML = "<h3>Ваш аккаунт:</h3>";
+
+                // Словарь для красивых названий полей на русском языке
+                const fieldLabels = {
+                    id: "🆔 Telegram ID",
+                    first_name: "👤 Имя",
+                    last_name: "👥 Фамилия",
+                    username: "🏷️ Юзернейм (@)",
+                    language_code: "🌐 Язык интерфейса",
+                    is_premium: "⭐ Telegram Premium",
+                    allows_write_to_pm: "💬 Разрешено писать в ЛС"
+                };
+
+                // Перебираем все свойства, которые вернул Telegram
+                for (const key in user) {
+                    if (user.hasOwnProperty(key)) {
+                        let value = user[key];
+
+                        // Форматируем логические значения (true/false) в понятный вид
+                        if (typeof value === 'boolean') {
+                            value = value ? "Да" : "Нет";
+                        }
+                        // Если значения нет, пишем "Не указано"
+                        if (value === undefined || value === null || value === "") {
+                            value = "Не указано";
+                        }
+
+                        // Получаем красивую метку или оставляем техническое имя поля
+                        const label = fieldLabels[key] || key;
+
+                        // Добавляем строчку с данными на страницу
+                        container.innerHTML += `<p style="text-align: left; margin: 8px 0;"><strong>${label}:</strong> ${value}</p>`;
+                    }
+                }
+            } else {
+                // Если открыли просто в обычном браузере вне Telegram
+                container.innerHTML = "<p>⚠️ Приложение запущено вне Telegram. Данные профиля недоступны.</p>";
+            }
+
+            // Логика кнопки отправки (передаем боту ВСЕ данные пользователя для теста)
+            const sendBtn = document.getElementById('sendBtn');
+            if (sendBtn) {
+                sendBtn.onclick = function() {
+                    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                        // Отправляем весь объект user обратно боту в виде JSON-строки
+                        tg.sendData(JSON.stringify(tg.initDataUnsafe.user));
+                    } else {
+                        alert("Нечего отправлять: вы открыли сайт вне Telegram");
+                    }
+                    tg.close();
+                };
+            }
         }
-
-        // 4. ОТПРАВЛЯЕМ ДАННЫЕ ОБРАТНО В БОТ
-        document.getElementById(sendBtn).addEventListener(click, () => {
-            // Создаем простой объект с данными (например, заказ)
-            const orderData = {
-                item: "Пицца Маргарита",
-                count: 1,
-                status: "success"
-            };
-
-            // Переводим в строку и отправляем боту
-            // Важно: метод sendData работает ТОЛЬКО если Mini App открыто через KeyboardButton (кнопку в меню)
-            tg.sendData(JSON.stringify(orderData));
-            
-            // Закрываем мини-приложение после отправки
-            tg.close();
-        });
     </script>
 </body>
+
 </html>
