@@ -1,12 +1,16 @@
-name: Deploy GitHub Pages from web folder
+name: Deploy GitHub Pages & Auto Update Telegram JS
 
 on:
   push:
     branches:
-      - main 
+      - main # Сборка при пуше в ветку main
+  schedule:
+    # Запуск по расписанию каждый понедельник в 00:00 по UTC (3:00 по МСК)
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # Позволяет запустить процесс вручную кнопкой в интерфейсе GitHub
 
 permissions:
-  contents: read
+  contents: write # Даем экшену право записывать изменения (делать коммиты)
   pages: write
   id-token: write
 
@@ -23,6 +27,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # НОВЫЙ ШАГ: Скачиваем свежий файл из Telegram
+      - name: Download fresh Telegram Web App JS
+        run: |
+          curl -o telegram-web-app.js https://telegram.org
+
+      # НОВЫЙ ШАГ: Проверяем изменения и делаем коммит, если файл обновился
+      - name: Commit and Push if updated
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Проверяем, изменился ли скачанный файл по сравнению с тем, что был в git
+          if git diff --quiet telegram-web-app.js; then
+            echo "Файл telegram-web-app.js не изменился, обновление не требуется."
+          else
+            echo "Обнаружена новая версия скрипта! Делаем коммит..."
+            git add telegram-web-app.js
+            git commit -m "chore: автоматическое обновление telegram-web-app.js [skip ci]"
+            git push
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
