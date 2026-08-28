@@ -32,7 +32,7 @@ jobs:
       - name: Download fresh Telegram Web App JS
         run: |
           mkdir -p js
-          curl -o js/telegram-web-app.js https://telegram.org
+          curl -o js/telegram-web-app.js https://telegram.org/js/telegram-web-app.js
 
       # ПРОВЕРЯЕМ ИЗМЕНЕНИЯ И ДЕЛАЕМ КОММИТ
       - name: Commit and Push if updated
