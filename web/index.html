@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Telegram Mini App</title>
+    <!-- 1. ПОДКЛЮЧАЕМ СКРИПТ TELEGRAM -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* 2. НАСТРАИВАЕМ ЦВЕТА ПОД ТЕМУ TELEGRAM */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .user-card {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Привет из Mini App!</h1>
+    
+    <!-- Сюда мы выведем имя пользователя -->
+    <div class="user-card">
+        <p>Добро пожаловать, <span id="username">Гость</span>!</p>
+    </div>
+
+    <!-- Кнопка для отправки данных обратно в бота -->
+    <button id="sendBtn">Отправить заказ боту</button>
+
+    <script>
+        // Инициализируем объект WebApp
+        const tg = window.Telegram.WebApp;
+
+        // Сообщаем Telegram, что приложение полностью загрузилось и готово к отображению
+        tg.ready();
+
+        // 3. ПОЛУЧАЕМ ДАННЫЕ О ПОЛЬЗОВАТЕЛЕ
+        // Проверяем, запущены ли мы внутри Telegram и есть ли данные пользователя
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            // Выводим имя (first_name) на экран
+            document.getElementById(username).innerText = user.first_name;
+        }
+
+        // 4. ОТПРАВЛЯЕМ ДАННЫЕ ОБРАТНО В БОТ
+        document.getElementById(sendBtn).addEventListener(click, () => {
+            // Создаем простой объект с данными (например, заказ)
+            const orderData = {
+                item: "Пицца Маргарита",
+                count: 1,
+                status: "success"
+            };
+
+            // Переводим в строку и отправляем боту
+            // Важно: метод sendData работает ТОЛЬКО если Mini App открыто через KeyboardButton (кнопку в меню)
+            tg.sendData(JSON.stringify(orderData));
+            
+            // Закрываем мини-приложение после отправки
+            tg.close();
+        });
+    </script>
+</body>
+</html>
