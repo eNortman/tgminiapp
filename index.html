@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Telegram Mini App</title>
-    <!-- 1. ПОДКЛЮЧАЕМ СКРИПТ TELEGRAM -->
-    <script src="js/telegram-web-app.js"></script>
+    <title>Telegram Mini App</title>
+    
+    <script src="./js/telegram-web-app.js"></script>
+
     <style>
-        /* 2. НАСТРАИВАЕМ ЦВЕТА ПОД ТЕМУ TELEGRAM */
         body {
             font-family: Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
@@ -38,92 +38,38 @@
 
     <h1>Профиль пользователя Telegram</h1>
     
-    <!-- Контейнер для красивого вывода всех полей -->
     <div class="user-card" id="userDataContainer">
-        <p>Загрузка данных профиля...</p>
+        <p>Инициализация приложения...</p>
     </div>
 
     <button id="sendBtn">Отправить данные боту</button>
 
-<script>
-    // Универсальная функция для вывода отладочных сообщений прямо на экран
-    function logToScreen(message, isError = false) {
-        const container = document.getElementById('userDataContainer');
-        if (container) {
-            if (container.innerText.includes("Загрузка данных профиля")) {
-                container.innerHTML = ""; // Очищаем стартовую заглушку
-            }
-            const color = isError ? "red" : "var(--tg-theme-text-color, #000000)";
-            container.innerHTML += `<p style="color: ${color}; text-align: left; margin: 4px 0;">${message}</p>`;
-        }
-        console.log(message);
-    }
+    <script>
+        // Код выполнится сразу, как только страница загрузится
+        window.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('userDataContainer');
 
-    function loadTelegramScript() {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            // 1. Сначала пробуем официальный скрипт
-            script.src = "https://telegram.org/js/telegram-web-app.js";
-            script.onload = () => {
-                logToScreen("✓ Официальный скрипт Telegram загружен");
-                resolve();
-            };
-            script.onerror = () => {
-                logToScreen("⚠ Ошибка загрузки с telegram.org. Пробуем локальный скрипт...", true);
-                reject();
-            };
-            document.head.appendChild(script);
-        });
-    }
-
-    // Запускаем процесс
-    loadTelegramScript()
-        .then(() => { initMiniApp(); })
-        .catch(() => {
-            // Резервный вариант: загрузка локального файла
-            const localScript = document.createElement('script');
-            localScript.src = "js/telegram-web-app.js"; 
-            localScript.onload = () => {
-                logToScreen("✓ Локальный скрипт загружен успешно");
-                initMiniApp();
-            };
-            localScript.onerror = () => {
-                logToScreen("❌ КРИТИЧЕСКАЯ ОШИБКА: Не удалось загрузить ни один скрипт!", true);
-            };
-            document.head.appendChild(localScript);
-        });
-
-    function initMiniApp() {
-        try {
-            // Проверяем, существует ли глобальный объект Telegram
+            // 1. Проверяем, на месте ли библиотека Telegram
             if (!window.Telegram || !window.Telegram.WebApp) {
-                logToScreen("❌ Ошибка: window.Telegram.WebApp не найден в системе!", true);
+                container.innerHTML = "<p style='color:red;'>❌ Ошибка: Библиотека Telegram не найдена по адресу ./js/telegram-web-app.js</p>";
                 return;
             }
 
             const tg = window.Telegram.WebApp;
-            
-            // Важно: вызываем ready() сразу
-            tg.ready();
-            logToScreen("✓ Telegram WebApp инициализирован. Версия API: " + tg.version);
+            tg.ready(); // Сообщаем Telegram, что мы открылись
 
-            // Проверяем initData и user
-            if (!tg.initDataUnsafe) {
-                logToScreen("⚠ Предупреждение: initDataUnsafe пуст", true);
-            }
-
+            // 2. Выводим данные, если зашли из бота
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const user = tg.initDataUnsafe.user;
-                logToScreen("<h3>Данные профиля:</h3>");
-                
+                container.innerHTML = "<h3>Ваш аккаунт:</h3>";
+
                 const fieldLabels = {
                     id: "🆔 Telegram ID",
                     first_name: "👤 Имя",
                     last_name: "👥 Фамилия",
                     username: "🏷️ Юзернейм (@)",
-                    language_code: "🌐 Язык интерфейса",
-                    is_premium: "⭐ Premium",
-                    allows_write_to_pm: "💬 Доступ в ЛС"
+                    language_code: "🌐 Язык",
+                    is_premium: "⭐ Premium"
                 };
 
                 for (const key in user) {
@@ -133,31 +79,25 @@
                         if (!value) value = "Не указано";
                         
                         const label = fieldLabels[key] || key;
-                        logToScreen(`<strong>${label}:</strong> ${value}`);
+                        container.innerHTML += `<p style="text-align: left; margin: 8px 0;"><strong>${label}:</strong> ${value}</p>`;
                     }
                 }
             } else {
-                logToScreen("⚠ Данные пользователя отсутствуют. Возможно, вы зашли с ПК браузера, а не из приложения Telegram.");
+                // Если открыли в обычном браузере на ПК
+                container.innerHTML = `<p style="color: orange;">✓ Скрипт успешно работает!<br><br>Данные пользователя пустые, потому что вы открыли сайт вне Telegram.<br><b>Запустите Mini App через кнопку в боте.</b></p>`;
             }
 
-            // Настройка кнопки
+            // Кнопка отправки данных боту
             const sendBtn = document.getElementById('sendBtn');
             if (sendBtn) {
                 sendBtn.onclick = function() {
-                    if (window.Telegram && window.Telegram.WebApp && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                         tg.sendData(JSON.stringify(tg.initDataUnsafe.user));
-                    } else {
-                        alert("Ошибка: Нечего отправлять");
                     }
                     tg.close();
                 };
             }
-
-        } catch (error) {
-            logToScreen("❌ Исключение в коде: " + error.message, true);
-        }
-    }
-</script>
+        });
+    </script>
 </body>
-
 </html>
