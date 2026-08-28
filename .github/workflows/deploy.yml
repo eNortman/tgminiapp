@@ -28,24 +28,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # НОВЫЙ ШАГ: Скачиваем свежий файл из Telegram
+      # СКАЧИВАЕМ ФАЙЛ НАПРЯМУЮ В ПАПКУ JS
       - name: Download fresh Telegram Web App JS
         run: |
-          curl -o telegram-web-app.js https://telegram.org
+          mkdir -p js
+          curl -o js/telegram-web-app.js https://telegram.org
 
-      # НОВЫЙ ШАГ: Проверяем изменения и делаем коммит, если файл обновился
+      # ПРОВЕРЯЕМ ИЗМЕНЕНИЯ И ДЕЛАЕМ КОММИТ
       - name: Commit and Push if updated
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "41898282+github-actions[bot]@://github.com"
           
-          # Проверяем, изменился ли скачанный файл по сравнению с тем, что был в git
-          if git diff --quiet telegram-web-app.js; then
-            echo "Файл telegram-web-app.js не изменился, обновление не требуется."
+          if git diff --quiet js/telegram-web-app.js; then
+            echo "Файл js/telegram-web-app.js не изменился."
           else
             echo "Обнаружена новая версия скрипта! Делаем коммит..."
-            git add telegram-web-app.js
-            git commit -m "chore: автоматическое обновление telegram-web-app.js [skip ci]"
+            git add js/telegram-web-app.js
+            git commit -m "chore: автоматическое обновление js/telegram-web-app.js [skip ci]"
             git push
           fi
 
